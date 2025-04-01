@@ -1,0 +1,161 @@
+import os
+import random
+import time
+
+class FedoraSimulator:
+    def __init__(self):
+        self.username = "root"
+        self.current_dir = f"/home/{self.username}"
+        self.commands = {
+            'help': self.show_help,
+            'ls': self.list_files,
+            'cd': self.change_dir,
+            'pwd': self.show_current_dir,
+            'mkdir': self.make_dir,
+            'rmdir': self.remove_dir,
+            'touch': self.create_file,
+            'rm': self.remove_file,
+            'exit': self.exit_simulator
+        }
+        self.filesystem = {
+            'home': {
+                self.username: {
+                    'Documents': {},
+                    'Downloads': {},
+                    'Pictures': {},
+                    'Music': {},
+                    'Videos': {}
+                }
+            }
+        }
+
+    def show_help(self):
+        print("Доступные команды:")
+        for cmd in self.commands:
+            print(f" - {cmd}")
+
+    def list_files(self):
+        current = self.get_current_dir()
+        if current:
+            print("\n".join(current.keys()))
+
+    def change_dir(self, path):
+        if path == "..":
+            self.current_dir = "/".join(self.current_dir.split("/")[:-1])
+        else:
+            new_path = os.path.join(self.current_dir, path)
+            if self.path_exists(new_path):
+                self.current_dir = new_path
+            else:
+                print(f"Ошибка: Директория '{path}' не существует")
+
+    def show_current_dir(self):
+        print(self.current_dir)
+
+    def make_dir(self, dirname):
+        current = self.get_current_dir()
+        if current is not None:
+            current[dirname] = {}
+            print(f"Директория '{dirname}' создана")
+        else:
+            print("Ошибка: Невозможно создать директорию")
+
+    def remove_dir(self, dirname):
+        current = self.get_current_dir()
+        if current is not None and dirname in current:
+            del current[dirname]
+            print(f"Директория '{dirname}' удалена")
+        else:
+            print(f"Ошибка: Директория '{dirname}' не существует")
+
+    def create_file(self, filename):
+        current = self.get_current_dir()
+        if current is not None:
+            current[filename] = None
+            print(f"Файл '{filename}' создан")
+        else:
+            print("Ошибка: Невозможно создать файл")
+
+    def remove_file(self, filename):
+        current = self.get_current_dir()
+        if current is not None and filename in current:
+            del current[filename]
+            print(f"Файл '{filename}' удален")
+        else:
+            print(f"Ошибка: Файл '{filename}' не существует")
+
+    def exit_simulator(self):
+        print("Завершение работы симулятора Linux...")
+        time.sleep(1)
+        exit()
+
+    def get_current_dir(self):
+        path = self.current_dir.split("/")[1:]
+        current = self.filesystem
+        for part in path:
+            if part in current:
+                current = current[part]
+            else:
+                return None
+        return current
+
+    def path_exists(self, path):
+        parts = path.split("/")[1:]
+        current = self.filesystem
+        for part in parts:
+            if part in current:
+                current = current[part]
+            else:
+                return False
+        return True
+
+    def run(self):
+        print("Добро пожаловать в симулятор Linux!")
+        print("Введите 'help' для списка доступных команд")
+        
+        while True:
+            try:
+                command = input(f"{self.username}@fedora-sim:{self.current_dir}$ ").strip().split()
+                if not command:
+                    continue
+                
+                cmd = command[0]
+                args = command[1:]
+                
+                if cmd in self.commands:
+                    self.commands[cmd](*args)
+                else:
+                    print(f"Ошибка: Команда '{cmd}' не найдена")
+            except KeyboardInterrupt:
+                print("\nИспользуйте 'exit' для завершения работы")
+            except Exception as e:
+                print(f"Ошибка: {str(e)}")
+
+if __name__ == "__main__":
+    simulator = FedoraSimulator()
+    simulator.run()
+    simulator = FedoraSimulator()
+    simulator.username = "null"  # Устанавливаем пользователя как root
+    simulator.run()
+    def sudo(self, *args):
+        if not args:
+            print("Использование: sudo <команда> [аргументы]")
+            return
+        
+        if self.username != "root":
+            print(f"[sudo] пароль для {self.username}: ")
+            # В реальной системе здесь была бы проверка пароля
+            self.username = "root"
+            print(f"Теперь вы root")
+        else:
+            print("Вы уже root")
+        
+        # Выполняем команду с новыми правами
+        cmd = args[0]
+        if cmd in self.commands:
+            self.commands[cmd](*args[1:])
+        else:
+            print(f"Ошибка: Команда '{cmd}' не найдена")
+            if self.username == "root":
+                self.username = "null"  # Возвращаем обычного пользователя после выполнения команды
+
